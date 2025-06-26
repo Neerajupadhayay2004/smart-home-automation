@@ -15,17 +15,28 @@
 ---
 
 ## 📱 **Screenshots**
-![Screenshot From 2025-06-26 10-48-04](https://github.com/user-attachments/assets/06b9a03b-7e28-45f7-8e7d-f02634d5db3e)
 ![Screenshot From 2025-06-26 18-30-36](https://github.com/user-attachments/assets/a7af2e56-bf43-4864-b82c-e54c1e2b3c69)
+![Screenshot From 2025-06-26 18-30-56](https://github.com/user-attachments/assets/7dca6123-7982-4d6e-b9eb-d9bd6f743532)
+![Screenshot From 2025-06-26 18-30-49](https://github.com/user-attachments/assets/28caa6cd-6afd-4739-89df-e2a03d62bb30)
+![Screenshot From 2025-06-26 18-31-02](https://github.com/user-attachments/assets/6a5bc657-8025-47c2-aa6a-b1ab835ed87e)
+![Screenshot From 2025-06-26 18-37-48](https://github.com/user-attachments/assets/83d00e98-db30-4f9b-b384-ebe136523d00)
+![Screenshot From 2025-06-26 18-31-11](https://github.com/user-attachments/assets/b8f0d7ce-7ef5-4c8d-8f3a-7f9b388907da)
+
 
 ### Desktop Dashboard
-![Desktop Dashboard](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Smart+Home+Dashboard)
+![Desktop Dashboard]![Screenshot From 2025-06-26 18-30-36](https://github.com/user-attachments/assets/5ceb5daa-ff89-4447-8696-5a72440138d7)
+
 
 ### Mobile Interface
-![Mobile Interface](https://via.placeholder.com/300x600/1a1a1a/ffffff?text=Mobile+Interface)
+![Mobile Interface]![Screenshot From 2025-06-26 18-37-54](https://github.com/user-attachments/assets/c7ac2108-0751-438e-b138-68eba9bf4573)
+
+![Screenshot From 2025-06-26 18-37-48](https://github.com/user-attachments/assets/6092e03c-4c1f-4c4e-98f0-bb6f07cad94b)
 
 ### Security System
-![Security System](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Security+System)
+![Security System]![Screenshot From 2025-06-26 18-30-44](https://github.com/user-attachments/assets/e82079a6-392c-49e3-98ef-14a9a101e81d)
+![Screenshot From 2025-06-26 18-30-49](https://github.com/user-attachments/assets/94138565-e310-4f63-beb1-8c96c1bb36b1)
+
+
 
 ---
 
