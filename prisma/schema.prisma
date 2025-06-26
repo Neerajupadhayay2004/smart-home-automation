@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastSeen    DateTime @default(now())
+  preferences Json?
+  
+  // Relations
+  homes       Home[]
+  sessions    Session[]
+  activities  Activity[]
+  
+  @@map("users")
+}
+
+model Home {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  timezone    String   @default("UTC")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Owner
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  devices     Device[]
+  rooms       Room[]
+  automations AutomationRule[]
+  energyData  EnergyData[]
+  securityEvents SecurityEvent[]
+  
+  @@map("homes")
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String
+  type        RoomType
+  floor       Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Home relation
+  homeId      String
+  home        Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  devices     Device[]
+  sensors     Sensor[]
+  
+  @@map("rooms")
+}
+
+model Device {
+  id            String     @id @default(cuid())
+  name          String
+  type          DeviceType
+  category      DeviceCategory
+  manufacturer  String?
+  model         String?
+  firmware      String?
+  macAddress    String?    @unique
+  ipAddress     String?
+  status        DeviceStatus @default(OFFLINE)
+  isOnline      Boolean    @default(false)
+  lastSeen      DateTime   @default(now())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  // Configuration
+  settings      Json?
+  capabilities  String[]
+  
+  // Relations
+  homeId        String
+  home          Home       @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  roomId        String?
+  room          Room?      @relation(fields: [roomId], references: [id])
+  
+  // Device-specific relations
+  sensors       Sensor[]
+  energyReadings EnergyReading[]
+  securityEvents SecurityEvent[]
+  
+  @@map("devices")
+}
+
+model Sensor {
+  id          String     @id @default(cuid())
+  name        String
+  type        SensorType
+  unit        String?
+  minValue    Float?
+  maxValue    Float?
+  accuracy    Float?
+  batteryLevel Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relations
+  deviceId    String
+  device      Device     @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  roomId      String?
+  room        Room?      @relation(fields: [roomId], references: [id])
+  
+  readings    SensorReading[]
+  
+  @@map("sensors")
+}
+
+model SensorReading {
+  id          String   @id @default(cuid())
+  value       Float
+  timestamp   DateTime @default(now())
+  quality     Float?   // Data quality score 0-1
+  
+  // Relations
+  sensorId    String
+  sensor      Sensor   @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  
+  @@index([sensorId, timestamp])
+  @@map("sensor_readings")
+}
+
+model EnergyData {
+  id              String   @id @default(cuid())
+  timestamp       DateTime @default(now())
+  totalConsumption Float   // kWh
+  currentPower    Float    // Watts
+  cost            Float    // Daily cost in currency
+  solarGeneration Float?   // Watts
+  batteryLevel    Float?   // Percentage
+  gridStatus      String?  // connected, backup, etc.
+  carbonFootprint Float?   // kg CO2
+  
+  // Relations
+  homeId          String
+  home            Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  
+  @@index([homeId, timestamp])
+  @@map("energy_data")
+}
+
+model EnergyReading {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  power       Float    // Current power consumption in Watts
+  energy      Float?   // Cumulative energy in kWh
+  voltage     Float?
+  current     Float?
+  frequency   Float?
+  powerFactor Float?
+  
+  // Relations
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  
+  @@index([deviceId, timestamp])
+  @@map("energy_readings")
+}
+
+model SecurityEvent {
+  id          String      @id @default(cuid())
+  type        SecurityEventType
+  severity    Severity
+  title       String
+  description String
+  timestamp   DateTime    @default(now())
+  resolved    Boolean     @default(false)
+  resolvedAt  DateTime?
+  metadata    Json?       // Additional event data
+  
+  // Relations
+  homeId      String
+  home        Home        @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  deviceId    String?
+  device      Device?     @relation(fields: [deviceId], references: [id])
+  
+  @@index([homeId, timestamp])
+  @@index([type, severity])
+  @@map("security_events")
+}
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  enabled     Boolean  @default(true)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastTriggered DateTime?
+  executions  Int      @default(0)
+  
+  // Rule definition
+  triggers    Json     // Trigger conditions
+  conditions  Json?    // Additional conditions
+  actions     Json     // Actions to execute
+  schedule    Json?    // Time-based scheduling
+  
+  // Relations
+  homeId      String
+  home        Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  
+  executions_log AutomationExecution[]
+  
+  @@map("automation_rules")
+}
+
+model AutomationExecution {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  success     Boolean
+  duration    Int?     // Execution time in milliseconds
+  error       String?
+  metadata    Json?
+  
+  // Relations
+  ruleId      String
+  rule        AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  
+  @@index([ruleId, timestamp])
+  @@map("automation_executions")
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  title       String
+  description String?
+  timestamp   DateTime     @default(now())
+  metadata    Json?
+  
+  // Relations
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, timestamp])
+  @@map("activities")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  lastUsed    DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model SystemLog {
+  id          String   @id @default(cuid())
+  level       LogLevel
+  message     String
+  timestamp   DateTime @default(now())
+  source      String?  // Component/service that generated the log
+  metadata    Json?
+  
+  @@index([level, timestamp])
+  @@map("system_logs")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  USER
+  GUEST
+}
+
+enum RoomType {
+  LIVING_ROOM
+  BEDROOM
+  KITCHEN
+  BATHROOM
+  GARAGE
+  BASEMENT
+  ATTIC
+  OFFICE
+  DINING_ROOM
+  HALLWAY
+  OUTDOOR
+  OTHER
+}
+
+enum DeviceType {
+  SMART_LIGHT
+  SMART_SWITCH
+  SMART_PLUG
+  THERMOSTAT
+  SECURITY_CAMERA
+  DOOR_LOCK
+  MOTION_SENSOR
+  DOOR_SENSOR
+  SMOKE_DETECTOR
+  WATER_LEAK_SENSOR
+  SMART_TV
+  SMART_SPEAKER
+  SMART_DISPLAY
+  ROUTER
+  HUB
+  SOLAR_INVERTER
+  BATTERY_SYSTEM
+  EV_CHARGER
+  SMART_METER
+  OTHER
+}
+
+enum DeviceCategory {
+  LIGHTING
+  SECURITY
+  CLIMATE
+  ENTERTAINMENT
+  ENERGY
+  NETWORK
+  SENSORS
+  APPLIANCES
+  OTHER
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  UPDATING
+  MAINTENANCE
+}
+
+enum SensorType {
+  TEMPERATURE
+  HUMIDITY
+  PRESSURE
+  LIGHT
+  MOTION
+  DOOR_WINDOW
+  SMOKE
+  CO2
+  AIR_QUALITY
+  NOISE
+  VIBRATION
+  WATER_LEAK
+  PROXIMITY
+  OCCUPANCY
+  ENERGY
+  OTHER
+}
+
+enum SecurityEventType {
+  MOTION_DETECTED
+  DOOR_OPENED
+  WINDOW_OPENED
+  ALARM_TRIGGERED
+  CAMERA_OFFLINE
+  INTRUSION_DETECTED
+  SYSTEM_ARMED
+  SYSTEM_DISARMED
+  ACCESS_GRANTED
+  ACCESS_DENIED
+  DEVICE_TAMPERED
+  NETWORK_INTRUSION
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  DEVICE_ADDED
+  DEVICE_REMOVED
+  DEVICE_CONTROLLED
+  AUTOMATION_CREATED
+  AUTOMATION_MODIFIED
+  AUTOMATION_DELETED
+  SECURITY_EVENT
+  ENERGY_ALERT
+  SYSTEM_UPDATE
+  OTHER
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
